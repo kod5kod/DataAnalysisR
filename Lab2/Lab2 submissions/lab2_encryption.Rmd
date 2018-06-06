@@ -1,0 +1,43 @@
+---
+title: "52414 Lab Encryption Guide"
+author: "52414"
+date: "4/25/2018"
+output: html_document
+---
+A short guide on file encryption using public key and `sodium`  
+
+First you need to install/load the necessary Libraries.  
+Both `Sodium` and `repmis` are in CRAN (and thus can be installed via `install.packages()` ).
+However, `cypher` must be installed from github using the command that starts with `remotes::`
+```{r}
+library("sodium")
+library("remotes")
+library("repmis") #see line 17
+# To install cypher:
+#remotes::install_github("ropensci/cyphr", upgrade = FALSE)
+library("cyphr")
+```
+
+Loading the key object from github:  
+Go to [Public_Key](https://github.com/DataScienceHU/DataAnalysisR/blob/master/guides/pub_cyphr_52414?raw=true) and the public key should be downloaded to your computer. 
+
+```{r}
+path.to.public.key <- "C:/Users/Alpha/Documents/university/yearc/simesterB/DataAnalysiswithR/labs/lab2/pub_cyphr_52414"
+load(path.to.public.key) #loading the downloaded public key into R
+```
+
+
+Encrypt your lab rmd file:
+Now you are ready to encrypt your lab1 rmd file.  
+Specify the path of your rmd file and the path you want to save your encripted rmd file in the following script:
+
+```{r}
+print(getwd()) #this can help you locate your rmd file
+rmd.path.name.input <- "C:/Users/Alpha/Documents/university/yearc/simesterB/DataAnalysiswithR/labs/lab2/lab_2.rmd"
+rmd.path.name.output <- "C:/Users/Alpha/Documents/university/yearc/simesterB/DataAnalysiswithR/labs/lab2/lab2_group14_crypt.rmd"
+# Below is the actual encryption command:
+cyphr::encrypt_file(rmd.path.name.input, pub_cyphr , rmd.path.name.output)
+```
+
+Last step: Upload your encypted RMD file to github in the following link:
+`https://github.com/DataScienceHU/DataAnalysisR/tree/master/Lab1/Lab1_submissions/`
