@@ -91,7 +91,8 @@ largest_total_assault_rate2013
 largest_total_assaults2013
 
 
-```   
+``` 
+
 ```{}
 We wanted answers in 'towns' not 'regions'... see solutions. 
 ```
