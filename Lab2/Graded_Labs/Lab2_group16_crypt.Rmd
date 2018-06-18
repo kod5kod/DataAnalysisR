@@ -1,0 +1,312 @@
+---
+title: "Lab 2"
+date: "Due 06/6/2018"
+output: html_document
+editor_options: 
+chunk_output_type: inline
+---
+
+GROUP Number: 16  
+Name of 1st group member: Shikma Breeman  
+Email of 1st group member: shikmabr@gmail.com  
+Name of 2st group member: Shoshan Am-Shalem 
+Email of 2st group member: Shoshan.amshalem@mail.huji.ac.il
+
+**Instructions:**   
+1. Please rename your group lab_2 rmd file as - `Lab2_group#.rmd`.   
+** The # should be replaced by your group number.  
+2. Fill in your code in the relevant code execution boxes.  
+3. Please avoid plagiarism - do not share your answers with other groups.  
+4. Use the encryption guide (see moodle) to encrypt your final rmd file and name it `Lab2_group#_crypt`   
+5. Upload the encrypted file to the following link:  
+** `https://github.com/DataScienceHU/DataAnalysisR/tree/master/Lab2/Lab2_submission/`
+
+# Lab 2
+
+Vaccines have helped save millions of lives. In the 19th century, before herd immunization was achieved through vaccination programs, deaths from infectious diseases, like smallpox and polio, were common. However, today, despite all the scientific evidence for their importance, vaccination programs have become somewhat controversial.
+
+The controversy started with a [paper](http://www.thelancet.com/journals/lancet/article/PIIS0140-6736(97)11096-0/abstract) published in 1988 and lead by [Andrew Wakefield](https://en.wikipedia.org/wiki/Andrew_Wakefield) claiming there was a link between the administration of the measles, mumps and rubella (MMR) vaccine, and the appearance of autism and bowel disease. Despite much science contradicting this finding, sensationalists media reports and fear mongering from conspiracy theorists, led parts of the public to believe that vaccines were harmful. Some parents stopped vaccinating their children. This dangerous practice can be potentially disastrous given that the Center for Disease Control (CDC) estimates that vaccinations will prevent more than 21 million hospitalizations and 732,000 deaths among children born in the last 20 years (see [Benefits from Immunization during the Vaccines for Children Program Era — United States, 1994-2013, MMWR](https://www.cdc.gov/mmwr/preview/mmwrhtml/mm6316a4.htm)). 
+
+Effective communication of data is a strong antidote to misinformation and fear mongering. In this homework you are going to prepare a report to have ready in case you need to help a family member, friend or acquaintance that is not aware of the positive impact vaccines have had for public health.
+
+The data used for these plots were collected, organized and distributed by the [Tycho Project](http://www.tycho.pitt.edu/). They include weekly reported counts data for seven diseases from 1928 to 2011, from all fifty states.
+
+
+```{r, required libraries, include=FALSE}
+library(ggplot2)
+library(tidyverse)
+library(RColorBrewer)
+```
+
+## Part 1
+
+0. Load the `diseases` data from Moodle or Github  
+
+    **Solution:** 
+```{, load data}
+us_contagious_diseases <- read.csv("~/diseases.csv")
+```
+```{r, load data}
+admin <- "Lee" #  "Lee" # or 
+if (admin=="Yuval") {
+  us_contagious_diseases_name <- "/Users/yuvalb/Dropbox/52414/Lectures_2018/course_data/disease_data/diseases"
+} else if (admin == "Lee"){
+  us_contagious_diseases_name <- "~/Dropbox (Personal)/School/52414/Lectures_2018/course_data/disease_data/diseases"
+} else {
+  print("Admin name not specified correctly")
+}
+
+us_contagious_diseases <- read.csv(file = us_contagious_diseases_name, stringsAsFactors = FALSE)
+```
+```{r}
+admin <- "Lee" #  "Lee" # or 
+if (admin=="Yuval") {
+  experiment <- "/Users/yuvalb/Dropbox/52414/Lectures_2018/labs/lab_2/Cleveland_Experiment.csv"
+  correct <- "/Users/yuvalb/Dropbox/52414/Lectures_2018/course_data/labs/lab_2/correct.rdata"
+} else if (admin == "Lee"){
+  experiment <- "~/Dropbox (Personal)/School/52414/Lectures_2018/labs/lab_2/Cleveland_Experiment.csv"
+  correct <- "~/Dropbox (Personal)/School/52414/Lectures_2018/labs/lab_2/correct.rdata"
+} else {
+  print("Admin name not specified correctly")
+}
+
+experiment.data <- read.csv(file = experiment, stringsAsFactors = FALSE)
+load(correct)
+```
+
+1. Use the `us_contagious_disease` and `dplyr` tools to create a data.frame called `dat` that stores only the Measles data (with all the other features). Please add  a per 100,000 people rate, and remove Alaska and Hawaii from the data since they only became states in the late 50s. Note that there is a `weeks_reporting` column. Take that into account when computing the rate.  
+
+    **Solution:** 
+```{r}
+dat <- us_contagious_diseases %>% filter(disease == "Measles") %>% filter(!grepl('Alaska|Hawaii', state)) %>% mutate(rate = round((weeks_reporting*count*100000) / population,2))
+```
+```{}
+(LEE) You didn't adjust and scale back the rate to a year (by *52). See solutions. 
+```
+
+
+2. Plot the Measles disease rates per year for California. Find out when the Measles vaccine was introduced and add a vertical line to the plot to show this year.  
+
+    **Solution:** 
+```{r}
+Cal <- dat %>% filter(state == "California")
+ggplot() +
+geom_point(aes(x = Cal$year, y = Cal$rate)) +
+  labs(title = "Measles Disease Rates per Year for California", x="Year", y="Rate") +
+geom_vline(xintercept = 1967, color = "blue", linetype = "dashed") +
+  annotate("text", label = "1967", x = 1968, y = 8000, size = 4, colour = "blue", angle = 90)
+  
+  
+```
+
+
+3. Does the pattern hold for other states? Use boxplots to get an idea of the distribution of rates for each year, and see if the pattern holds across states.  
+a. Generate the plot with scale_y_continuous
+b. Generate the same plot but now with scale_y_sqrt (breaks = seq(0, 100, 4)^2))  
+Which one is better and why?
+
+    **Solution:**   
+    
+```{r}
+ggplot(dat, aes(x = year, y = rate, group = year)) +
+  geom_boxplot(outlier.colour = "red") +
+  scale_y_continuous(limits = c(0,87500)) +
+  geom_vline(xintercept = 1968, color = "blue", linetype = "dashed") +
+  annotate("text", label = "1968", x = 1969, y = 20000, size = 4, colour = "blue", angle = 90) +
+  labs(title = "Distribution of Rates for each Year", subtitle = "Question 3a", x="Year", y="Rate")
+```
+
+```{r}
+ggplot(dat, aes(x = year, y = rate, group = year)) +
+  geom_boxplot(outlier.colour = "red") +
+  scale_y_sqrt (breaks = seq(0, 100000, 25000)) +
+  geom_vline(xintercept = 1968, color = "blue", linetype = "dashed") +
+  annotate("text", label = "1968", x = 1969, y = 20000, size = 4, colour = "blue", angle = 90) +
+  labs(title = "Distribution of Rates for each Year", subtitle = "Question 3b", x="Year", y="Rate")
+```
+```{}
+Your yaxis is off ...
+```
+
+In one hand, the second graph is better, because it does not omit points, as opposed to the first graph we ignored from very unusual outliers points by limiting the values of the Y axis.
+On the other hand, in the first graph it is much easier to see the pattern of the data.
+
+
+4. One problem with the boxplot is that it does not let us see state-specific trends.  Plot the Measles disease rates per year for all states. Find out when the Measles vaccine was introduced and add a vertical line to the plot to show this year. Add the US average to the plot. Hint: Note there are missing values in the data.  
+
+    **Solution:**  
+   
+```{r}
+Y = unique(dat$year)
+M = rep(0,length(Y))
+for (y in 1:length(Y)){
+  M[y] = round(mean(dat$rate[dat$year == Y[y]]))
+}
+dat %>% mutate(mean_rate = 0)
+for(i in 1:nrow(dat)){dat$mean_rate[i] = M[which(Y == dat$year[i])]}
+
+ggplot(dat) +
+  geom_point(aes(x = year, y = rate, color = state)) +
+  geom_vline(xintercept = 1968, color = "blue", linetype = "dashed") +
+  annotate("text", label = "1968", x = 1969, y = 20000, size = 4, colour = "blue", angle = 90) +
+  theme(legend.position="bottom", legend.key.height=unit(0.3,"line"), legend.text = element_text(size=8)) +
+  geom_smooth(aes(x = year, y = mean_rate), method = lm, formula = y ~ splines::bs(x, 10), se = FALSE, color = "black") +
+  annotate("text", label = "--- Means per Year", x = 1995, y = 125000, color="black", fontface="bold") +
+  labs(title = "Distribution of Rates for each Year", x="Year", y="Rate")
+```
+
+## Part 2
+
+Here we'll start analyzing the results we collected in class regarding the display of visual information. 
+
+5. Download and import the "Cleveland Experiment.csv" and "correct.Rdata" files from moodle. 
+
+```{}
+experiment.data <- read.csv("~/Cleveland_Experiment.csv")
+load("~/correct.rdata")
+```
+
+
+6. Look at the distribution of guesses of Question 2 of the experiment.  
+a. Compare the correct difference vs the reported (experiment data)
+b. Compare it to a normal distribution with a histogram and with the qq-plot.  
+c. Compare to the normal distribution using a density plot. 
+d. Would you approximate this distribution using the normal? 
+
+    Solution:
+
+```{r}
+experiment.data = experiment.data[-1,] # Removing the first line, improper observation
+mu_q2 = mean(experiment.data$Question.2)
+
+# Histogram of correct vs reported
+ggplot(experiment.data) +
+  geom_histogram(aes(x = Question.2), bins = 7, fill = "light grey") +
+  geom_vline(xintercept = mu_q2, color = "magenta", linetype = "solid", size = 1) +
+  annotate("text", label = paste("Mean :",round(mu_q2,3)) ,x = mu_q2+0.003, y = 1.2, size = 4, colour = "magenta", angle = 90)+
+  geom_vline(xintercept = correct[2], color = "dark magenta", linetype = "longdash", size = 1) +
+  annotate("text", label = paste("Correct :",round(correct[2],3)) ,x = correct[2]+0.003, y = 1.2, size = 4, colour = "dark magenta", angle = 90) +
+  labs(title = "Correct Answer Difference vs the Reported Answers (Q.2)", x="Reported", y="Count")
+```
+
+```{r}
+# we use the mean we calculate for the last graph
+s_q2 = sd(experiment.data$Question.2)
+
+# Histogram of normal dist. vs reported
+ggplot(experiment.data) +
+  geom_histogram(aes(Question.2), bins = 7, fill = "light grey") +
+  stat_function(fun = dnorm, args = list(mean = mu_q2, sd = s_q2), color = "blue", size = 1) +
+  annotate("text", label = "--- Normal Distribution", x = 0.19, y = 7.5, color="blue", fontface="bold") +
+  labs(title = "Normal Distrabution vs the Reported Answers (Q.2)",subtitle = "Histogram", x = "Reported", y = "Count")
+```
+
+```{r}
+ggplot(experiment.data) +
+  stat_qq(aes(sample = Question.2), distribution = qnorm, color = "blue") +
+  geom_abline(intercept = mu_q2, slope = s_q2, size = 0.5) +
+  labs(title = "Normal Distrabution vs the Reported Answers (Q.2)", subtitle = "QQ-plot",  x = "Teoretical", y = "Question 2 Answers")
+```
+
+```{r}
+ggplot(experiment.data) +
+  geom_density(aes(Question.2), color="magenta", size = 1) +
+  annotate("text", label = "--- Reported Density", x = 0.175, y = 8, color="magenta", fontface="bold") +
+  stat_function(fun = dnorm, args = list(mean = mu_q2, sd = s_q2), color="blue", size = 1) +
+  annotate("text", label = "--- Normal Density", x = 0.172, y = 7.5, color="blue", fontface="bold") +
+  labs(title = "Normal Distrabution vs the Reported Answers (Q.2)", subtitle = "Density",  x="Question 2 Answers", y="Density")
+```
+
+We don't think that the records distribution corresponds to the normal distribution.
+First, we can see that both the center and the right-hand side of the QQ-plot chart have a deviation of the points from the line (corresponding to the normal distribution). These deviations are fitting to the density graph of the distribution of the data vs the normal distribution.
+In addition, in the form of density records there are more than one "hill", so there may be several factors that affect the density structure of the data. It is possible that the factors don't come from the same distribution, and therefore the distribution of records doesn't fit perfectly into the normal distribution.
+However, it is important to remember that the size of the data is very small (24 observations), so that if we increase the number of observations, the density will be more similar to that of the normal distribution.
+
+
+7. Perform the same analysis (all the above) for question 5 of the experiment.  
+How are the two compare?  
+
+    Solution:
+
+NOTE: The 4th observation (with a value of 0.9) is defined as abnormal. Therefore we chose to change its value to the mean value of the other records.
+
+```{r}
+mu_q5 = mean(experiment.data$Question.5[-which(experiment.data$Question.5 > 0.5)])
+data_q5 = experiment.data
+data_q5$Question.5[which(data_q5$Question.5 > 0.5)] = mu_q5
+
+# Histogram of correct vs reported
+ggplot(data_q5) +
+  geom_histogram(aes(Question.5), bins = 7, fill = "light grey") +
+  geom_vline(xintercept = mu_q5, color = "magenta", linetype = "solid", size = 1) +
+  annotate("text", label = paste("Mean :",round(mu_q5,3)) ,x = mu_q5+0.003, y = 1.3, size = 4, colour = "magenta", angle = 90)+
+  geom_vline(xintercept = correct[5], color = "dark magenta", linetype = "longdash", size = 1) +
+  annotate("text", label = paste("Correct :",round(correct[5],3)) ,x = correct[5]+0.003, y = 1.4, size = 4, colour = "dark magenta", angle = 90) +
+  labs(title = "Correct Answer Difference vs the Reported Answers (Q.5)", x="Reported", y="Count") +
+  annotate("text", label = "Outlier: 4th observation = 0.9",x = 0.17, y = 7.5, size = 4)
+```
+
+```{r}
+# we use the mean we calculate for the last graph
+s_q5 = sd(data_q5$Question.5)
+
+# Histogram of normal dist. vs reported
+ggplot(data_q5) +
+  geom_histogram(aes(Question.5), bins = 7, fill = "light grey") +
+  stat_function(fun = dnorm, args = list(mean = mu_q5, sd = s_q5), color = "blue", size = 1) +
+  annotate("text", label = "--- Normal Distribution", x = 0.18, y = 8, color="blue", fontface="bold") +
+  labs(title = "Normal Distrabution vs the Reported Answers (Q.5)",subtitle = "Histogram", x = "Reported", y = "Count") +
+  annotate("text", label = "Outlier: 4th observation = 0.9", x = 0.174, y = 9, size = 4)
+```
+
+```{r}
+ggplot(data_q5) +
+  stat_qq(aes(sample = Question.5), distribution = qnorm, color = "blue") +
+  geom_abline(intercept = mu_q5, slope = s_q5, size = 0.5) +
+  labs(title = "Normal Distrabution vs the Reported Answers (Q.5)", subtitle = "QQ-plot",  x = "Teoretical", y = "Question 5 Answers")
+```
+
+```{r}
+ggplot(data_q5) +
+  geom_density(aes(Question.5), color="magenta", size = 1) +
+  annotate("text", label = "--- Reported Density", x = 0.175, y = 8, color="magenta", fontface="bold") +
+  stat_function(fun = dnorm, args = list(mean = mu_q5, sd = s_q5), color="blue", size = 1) +
+  annotate("text", label = "--- Normal Density", x = 0.172, y = 7.5, color="blue", fontface="bold") +
+  labs(title = "Normal Distrabution vs the Reported Answers (Q.5)", subtitle = "Density",  x="Question 5 Answers", y="Density")
+```
+
+In this case (dispersion of the answers to question 5), the normal distribution appears to be more appropriate.
+Here too, it is advisable to increase the data, so that its distribution will be even more similar.
+
+
+8. In one figure graph the boxplots for each experiment question. Hint - use the base R function `stack`. 
+a. Do you think the output figure is satisfying in terms of explaining the data? 
+b. Use scale_y_continuous to trim some of the outliers to make the figure more readable. In addition, add a line to each boxplot to symbolize the `true` mean.  Hint - one way of adding the true lines is by adding another set of boxplots with zero variation centered around `correct`.  
+
+    Solutions:
+```{r}
+data_q8 = stack(experiment.data[,-1])
+
+ggplot(data_q8) +
+  geom_boxplot(aes(x = ind, y = values), outlier.colour = "blue") +
+  geom_point(aes(x = 4, y = 4), color = "red", size = 3) + # colored q.4 outliers
+  geom_point(aes(x = 10, y = 3), color = "red", size = 3) + # colored q.5.1 outliers
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.4)) +
+  labs(title = "Boxplots for each Experiment Question",  x="Questions", y="Answers")
+```
+
+In this graph it is very difficult to see the dispersion of the answers in each question, since there are two significantly different answers, in questions 4 and 5.1 (painted in red). The irregular results cause the informative area in the graph to be "shrunk" therefor the data is unreadable.
+
+
+```{r}
+ggplot(data_q8) +
+  geom_boxplot(aes(x = ind, y = values), outlier.colour = "blue") +
+  scale_y_continuous(limits = c(0,1.5)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.4)) +
+  geom_boxplot(aes(x = ind, y = rep(correct, each = 24)), color = "red") +
+  annotate("text", label = "--- Correct Answer", x = 18, y = 1.4, color="red") +
+  labs(title = "Boxplots for each Experiment Question",  x="Questions", y="Answers")
+```
+
+
+

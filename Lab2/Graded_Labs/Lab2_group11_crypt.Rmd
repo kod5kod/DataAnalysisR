@@ -1,0 +1,296 @@
+---
+title: "Lab 2"
+date: "Due 06/6/2018"
+output: html_document
+editor_options: 
+chunk_output_type: inline
+---
+
+GROUP Number: ____11____  
+Name of 1st group member: ____Netanel Deutsch____  
+Email of 1st group member: ____netanel.deutsch@mail.huji.ac.il____  
+Name of 2st group member: ____Yonatan Rosen___ 
+Email of 2st group member: ____yonatan.rosen@mail.huji.ac.il____
+
+**Instructions:**   
+1. Please rename your group lab_2 rmd file as - `Lab2_group#.rmd`.   
+** The # should be replaced by your group number.  
+2. Fill in your code in the relevant code execution boxes.  
+3. Please avoid plagiarism - do not share your answers with other groups.  
+4. Use the encryption guide (see moodle) to encrypt your final rmd file and name it `Lab2_group#_crypt`   
+5. Upload the encrypted file to the following link:  
+** `https://github.com/DataScienceHU/DataAnalysisR/tree/master/Lab2/Lab2_submission/`
+
+# Lab 2
+
+Vaccines have helped save millions of lives. In the 19th century, before herd immunization was achieved through vaccination programs, deaths from infectious diseases, like smallpox and polio, were common. However, today, despite all the scientific evidence for their importance, vaccination programs have become somewhat controversial.
+
+The controversy started with a [paper](http://www.thelancet.com/journals/lancet/article/PIIS0140-6736(97)11096-0/abstract) published in 1988 and lead by [Andrew Wakefield](https://en.wikipedia.org/wiki/Andrew_Wakefield) claiming there was a link between the administration of the measles, mumps and rubella (MMR) vaccine, and the appearance of autism and bowel disease. Despite much science contradicting this finding, sensationalists media reports and fear mongering from conspiracy theorists, led parts of the public to believe that vaccines were harmful. Some parents stopped vaccinating their children. This dangerous practice can be potentially disastrous given that the Center for Disease Control (CDC) estimates that vaccinations will prevent more than 21 million hospitalizations and 732,000 deaths among children born in the last 20 years (see [Benefits from Immunization during the Vaccines for Children Program Era — United States, 1994-2013, MMWR](https://www.cdc.gov/mmwr/preview/mmwrhtml/mm6316a4.htm)). 
+
+Effective communication of data is a strong antidote to misinformation and fear mongering. In this homework you are going to prepare a report to have ready in case you need to help a family member, friend or acquaintance that is not aware of the positive impact vaccines have had for public health.
+
+The data used for these plots were collected, organized and distributed by the [Tycho Project](http://www.tycho.pitt.edu/). They include weekly reported counts data for seven diseases from 1928 to 2011, from all fifty states.
+
+
+```{r, required libraries, include=FALSE}
+library(ggplot2)
+library(tidyverse)
+library(RColorBrewer)
+```
+
+## Part 1
+
+0. Load the `diseases` data from Moodle or Github  
+
+    **Solution:** 
+```{, load data}
+us_contagious_diseases <- read.csv("C:/Users/yonatan/Documents/R/data analysis with r/lab2/diseases")
+```
+
+```{r, load data}
+admin <- "Lee" #  "Lee" # or 
+if (admin=="Yuval") {
+  us_contagious_diseases_name <- "/Users/yuvalb/Dropbox/52414/Lectures_2018/course_data/disease_data/diseases"
+} else if (admin == "Lee"){
+  us_contagious_diseases_name <- "~/Dropbox (Personal)/School/52414/Lectures_2018/course_data/disease_data/diseases"
+} else {
+  print("Admin name not specified correctly")
+}
+
+us_contagious_diseases <- read.csv(file = us_contagious_diseases_name, stringsAsFactors = FALSE)
+```
+```{r}
+admin <- "Lee" #  "Lee" # or 
+if (admin=="Yuval") {
+  experiment <- "/Users/yuvalb/Dropbox/52414/Lectures_2018/labs/lab_2/Cleveland_Experiment.csv"
+  correct <- "/Users/yuvalb/Dropbox/52414/Lectures_2018/course_data/labs/lab_2/correct.rdata"
+} else if (admin == "Lee"){
+  experiment <- "~/Dropbox (Personal)/School/52414/Lectures_2018/labs/lab_2/Cleveland_Experiment.csv"
+  correct <- "~/Dropbox (Personal)/School/52414/Lectures_2018/labs/lab_2/correct.rdata"
+} else {
+  print("Admin name not specified correctly")
+}
+
+experiment.data <- read.csv(file = experiment, stringsAsFactors = FALSE)
+load(correct)
+```
+
+
+1. Use the `us_contagious_disease` and `dplyr` tools to create a data.frame called `dat` that stores only the Measles data (with all the other features). Please add  a per 100,000 people rate, and remove Alaska and Hawaii from the data since they only became states in the late 50s. Note that there is a `weeks_reporting` column. Take that into account when computing the rate.  
+
+    **Solution:** 
+```{r}
+dat = filter(us_contagious_diseases,disease == "Measles")
+dat =  filter(dat, state != "Hawaii")
+dat =  filter(dat, state != "Alaska")
+dat = mutate(dat,rate_100k = (365/(weeks_reporting*7))*(count/population)*100000)
+```
+
+2. Plot the Measles disease rates per year for California. Find out when the Measles vaccine was introduced and add a vertical line to the plot to show this year.  
+
+    **Solution:** 
+```{r}
+hlp = which(dat$state == "California")
+plot(dat$year[hlp], dat$rate_100k[hlp], xlab = "years", ylab = "disease rate per 100,000", main = "Measles disease rate per year in California")
+abline(v = 1963, col = 'red')
+legend(1990, 1200, legend = c("vaccine"), col = c("red"), lty=1, cex=0.8)
+```
+
+Vaccines were introduced in 1963: https://en.wikipedia.org/wiki/Measles_vaccine
+
+
+
+3. Does the pattern hold for other states? Use boxplots to get an idea of the distribution of rates for each year, and see if the pattern holds across states.  
+a. Generate the plot with scale_y_continuous
+b. Generate the same plot but now with scale_y_sqrt (breaks = seq(0, 100, 4)^2))  
+Which one is better and why?
+
+
+    **Solution:**   
+    
+```{r}
+ggplot(dat, aes(x = year, y = rate_100k, group = year)) +
+  geom_boxplot() + 
+  scale_y_continuous() +
+  geom_vline(xintercept = 1963, color="red") +
+  ggtitle("Disease rate per year per state")
+
+
+ggplot(dat, aes(x = year, y = rate_100k, group = year)) +
+  geom_boxplot() + 
+  scale_y_sqrt(breaks = seq(0, 100, 4)^2) +
+  geom_vline(xintercept = 1963, color="red") +
+  ggtitle("Disease rate (rescaled) per year per state")
+
+```
+
+Answer: The second plot is better since it is easier to see a patterns of the distributions. In particular it is easier to see that the disease rate decreases dramaticly in all states a few years after introducing the vaccine.
+
+
+
+
+4. One problem with the boxplot is that it does not let us see state-specific trends.  Plot the Measles disease rates per year for all states. Find out when the Measles vaccine was introduced and add a vertical line to the plot to show this year. Add the US average to the plot. Hint: Note there are missing values in the data.  
+
+    **Solution:**  
+   
+```{r}
+us_avg <- data.frame(dat %>% group_by(year) %>% summarise_at(vars(rate_100k), funs(sqrt(mean(., na.rm=TRUE)))))
+
+  
+ggplot() +
+  geom_point(data = dat, mapping = aes(x = year, y = sqrt(rate_100k), color = state)) + 
+  theme(legend.position = "none") +
+  geom_vline(xintercept = 1963, color = "red") +
+  geom_line(data = us_avg, aes(x=us_avg$year, y=us_avg$rate_100k),  color="darkgreen", size=1 )  +
+  ggtitle("Disease rate per year per state")
+
+
+```
+
+(darkgreen line is the US disease average rate, and the red veritcal line is the year the vaccine was introduced. we did not add a legend in order to be able to see the plot properly (without all states listed with colors))
+
+
+
+## Part 2
+
+Here we'll start analyzing the results we collected in class regarding the display of visual information. 
+
+5. Download and import the "Cleveland Experiment.csv" and "correct.Rdata" files from moodle. 
+
+```{}
+experiment.data <- read.csv("C:/Users/yonatan/Documents/R/data analysis with r/lab2/Cleveland_Experiment.csv")
+load("C:/Users/yonatan/Documents/R/data analysis with r/lab2/correct.rdata")
+```
+
+
+6. Look at the distribution of guesses of Question 2 of the experiment.  
+a. Compare the correct difference vs the reported (experiment data)
+b. Compare it to a normal distribution with a histogram and with the qq-plot.  
+c. Compare to the normal distribution using a density plot. 
+d. Would you approximate this distribution using the normal? 
+
+    Solution:
+
+```{r}
+experiment.data <- experiment.data[-1,]
+exper.data.with.correct <- experiment.data
+exper.data.with.correct[nrow(exper.data.with.correct)+1, ] <- c(NA, correct)
+exper.data.with.correct["obs.correct.indicator"] <- c(rep("guess",nrow(exper.data.with.correct)-1), "correct")
+exper.data.with.correct %>% ggplot(aes(x = Question.2, y = rep(1, length(Question.2)), color=obs.correct.indicator)) + 
+  geom_jitter(height = 0.1) + 
+  coord_cartesian(ylim = c(0, 2)) +
+  xlab("answers") + 
+  ylab("(no improtance for y value)") +
+  ggtitle("Distribution of guesses vs. correct answer - Question 2") +
+  guides(color=guide_legend("type of answer"))
+```
+```{,Lee's comments}
+If there is no importance to y here, why use a bivariate visualization?
+```
+
+
+```{r}
+experiment.data %>% ggplot(aes(x = Question.2)) + 
+  geom_histogram(binwidth = 0.005) +
+  ggtitle("Histogram of guesses for Question 2")
+```
+
+```{r}
+experiment.data %>% ggplot(aes(sample = scale(Question.2))) +
+  geom_qq() + geom_abline() +
+  ggtitle("QQ-Plot of Question 2 Guesses")
+
+```
+
+```{r}
+q.2.mean <- mean(experiment.data$Question.2)
+q.2.sd <- sd(experiment.data$Question.2)
+
+experiment.data %>% ggplot(aes(x = Question.2)) + 
+  geom_density(adjust=1, fill = "#00BFC4") +
+  stat_function(lwd=1.5,fun = dnorm, n = 101, args = list(mean = q.2.mean, sd = q.2.sd)) +
+  ggtitle("Gusses distribution vs Normal distribution - Question 2")
+  # check which degree of smoothness to use
+```
+
+d. From the graphs above it seems that the data is NOT approximitly normal. The qq-plot shows a lot of violations, as well as the histogram and the density plot. Nevertheless that can be because we do not have a large enough sample. If the sample was larger we might have seen something closer to normal.
+
+
+```{,Lee's comments }
+Too many bins for the histogram... 
+```
+
+7. Perform the same analysis (all the above) for question 5 of the experiment.  
+How are the two compare?  
+
+    Solution:
+
+```{r}
+exper.data.with.correct %>% ggplot(aes(x = Question.5, y = rep(1, length(Question.5)), color=obs.correct.indicator)) + 
+  geom_jitter(height = 0.1) + 
+  coord_cartesian(ylim = c(0, 2)) +
+  xlab("answers") + 
+  ylab("(no improtance for y value)") +
+  ggtitle("Distribution of guesses vs. correct answer - Question 5") +
+  guides(color=guide_legend("type of answer"))
+
+
+experiment.data %>% ggplot(aes(x = Question.5)) + 
+  geom_histogram(binwidth = 0.005) +
+  ggtitle("Histogram of guesses for Question 5")
+
+
+experiment.data %>% ggplot(aes(sample = scale(Question.5))) +
+  geom_qq() + geom_abline() +
+  ggtitle("QQ-Plot of Question 5 Gusses")
+
+
+q.5.mean <- mean(experiment.data$Question.5)
+q.5.sd <- sd(experiment.data$Question.5)
+
+experiment.data %>% ggplot(aes(x = Question.5)) + 
+  geom_density(adjust=1, fill = "#00BFC4") +
+  stat_function(lwd=1.5,fun = dnorm, n = 101, args = list(mean = q.5.mean, sd = q.5.sd)) +
+  ggtitle("Gusses distribution vs Normal distribution - Question 5")
+```
+
+It seems very clear from all the graphs that question 5 is REALLY NOT normal. Whilst qurstion 2 you can get some what of an approximation, even if it is not exact, question 5 really differs from a normal distribution.
+
+
+
+8. In one figure graph the boxplots for each experiment question. Hint - use the base R function `stack`. 
+a. Do you think the output figure is satisfying in terms of explaining the data? 
+b. Use scale_y_continuous to trim some of the outliers to make the figure more readable. In addition, add a line to each boxplot to symbolize the `true` mean.  Hint - one way of adding the true lines is by adding another set of boxplots with zero variation centered around `correct`.  
+
+    Solutions:
+```{r}
+stacked <- stack(experiment.data[,-1])
+stacked %>% ggplot(aes(x=ind, y=values)) + 
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  ggtitle("Distribution of Guesses in all questions")
+
+
+```
+
+a. the only thing that is clear from the data is that there are extreme outliers in some of the questions (for example, question 4 and question 5.1)
+
+
+
+```{r}
+
+correct.with.indices <- data.frame(correct, unique(stacked$ind))
+colnames(correct.with.indices) <- c("values", "index")
+
+stacked %>% ggplot(aes(x=ind, y=values)) + 
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  scale_y_continuous(limits = c(0,0.65)) +
+  xlab("questions") +
+  geom_boxplot(data=correct.with.indices, aes(x=index, y=values),color = "red") +
+  ggtitle("Distribution of Guesses in all questions (rescaled) with correct answer")
+# how many outliers to cut off?
+```
+
+(We decided to limit the y-axis to max 6.5 since the valid answers are maximum 0.5. red line is the correct answer)
+
