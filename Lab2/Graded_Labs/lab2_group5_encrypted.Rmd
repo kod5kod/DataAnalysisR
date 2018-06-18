@@ -1,0 +1,327 @@
+---
+title: "Lab 2"
+date: "Due 06/6/2018"
+output: html_document
+editor_options: 
+chunk_output_type: inline
+---
+
+GROUP Number: 5  
+Name of 1st group member: Tal Shwartztooch
+Email of 1st group member: Talshwartztooch@gmail.com 
+Name of 2st group member: Yogev Dardik
+Email of 2st group member: yogevdardik@gmail.com
+
+**Instructions:**   
+1. Please rename your group lab_2 rmd file as - `Lab2_group#.rmd`.   
+** The # should be replaced by your group number.  
+2. Fill in your code in the relevant code execution boxes.  
+3. Please avoid plagiarism - do not share your answers with other groups.  
+4. Use the encryption guide (see moodle) to encrypt your final rmd file and name it `Lab2_group#_crypt`   
+5. Upload the encrypted file to the following link:  
+** `https://github.com/DataScienceHU/DataAnalysisR/tree/master/Lab2/Lab2_submission/`
+
+# Lab 2
+
+Vaccines have helped save millions of lives. In the 19th century, before herd immunization was achieved through vaccination programs, deaths from infectious diseases, like smallpox and polio, were common. However, today, despite all the scientific evidence for their importance, vaccination programs have become somewhat controversial.
+
+The controversy started with a [paper](http://www.thelancet.com/journals/lancet/article/PIIS0140-6736(97)11096-0/abstract) published in 1988 and lead by [Andrew Wakefield](https://en.wikipedia.org/wiki/Andrew_Wakefield) claiming there was a link between the administration of the measles, mumps and rubella (MMR) vaccine, and the appearance of autism and bowel disease. Despite much science contradicting this finding, sensationalists media reports and fear mongering from conspiracy theorists, led parts of the public to believe that vaccines were harmful. Some parents stopped vaccinating their children. This dangerous practice can be potentially disastrous given that the Center for Disease Control (CDC) estimates that vaccinations will prevent more than 21 million hospitalizations and 732,000 deaths among children born in the last 20 years (see [Benefits from Immunization during the Vaccines for Children Program Era — United States, 1994-2013, MMWR](https://www.cdc.gov/mmwr/preview/mmwrhtml/mm6316a4.htm)). 
+
+Effective communication of data is a strong antidote to misinformation and fear mongering. In this homework you are going to prepare a report to have ready in case you need to help a family member, friend or acquaintance that is not aware of the positive impact vaccines have had for public health.
+
+The data used for these plots were collected, organized and distributed by the [Tycho Project](http://www.tycho.pitt.edu/). They include weekly reported counts data for seven diseases from 1928 to 2011, from all fifty states.
+
+
+```{r}
+library("sodium")
+library("cyphr")
+#library("repmis")
+
+#remotes::install_github("ropensci/cyphr", upgrade = FALSE)
+```
+
+
+```{}
+path.to.public.key <- "C:/Users/Tal/Desktop/R/pub_cyphr_52414"
+load(path.to.public.key) 
+```
+
+```{}
+rmd.path.name.input <- "C:/Users/Tal/Desktop/R/lab2_completed.rmd"
+rmd.path.name.output <- "C:/Users/Tal/Desktop/R/lab2_group5_ENCRYPTED.RMD"
+cyphr::encrypt_file(rmd.path.name.input, pub_cyphr , rmd.path.name.output)
+
+
+
+```
+
+```{r, required libraries, include=FALSE}
+library(ggplot2)
+library(tidyverse)
+library(RColorBrewer)
+library(magrittr)
+
+```
+
+## Part 1
+
+0. Load the `diseases` data from Moodle or Github  
+
+    **Solution:** 
+```{, load data}
+
+us_contagious_diseases <- read.csv("C:/Users/Tal/Desktop/R/lab2/diseases.csv")
+
+```
+```{r, load data}
+admin <- "Lee" #  "Lee" # or 
+if (admin=="Yuval") {
+  us_contagious_diseases_name <- "/Users/yuvalb/Dropbox/52414/Lectures_2018/course_data/disease_data/diseases"
+} else if (admin == "Lee"){
+  us_contagious_diseases_name <- "~/Dropbox (Personal)/School/52414/Lectures_2018/course_data/disease_data/diseases"
+} else {
+  print("Admin name not specified correctly")
+}
+
+us_contagious_diseases <- read.csv(file = us_contagious_diseases_name, stringsAsFactors = FALSE)
+```
+
+
+1. Use the `us_contagious_disease` and `dplyr` tools to create a data.frame called `dat` that stores only the Measles data (with all the other features). Please add  a per 100,000 people rate, and remove Alaska and Hawaii from the data since they only became states in the late 50s. Note that there is a `weeks_reporting` column. Take that into account when computing the rate.  
+
+    **Solution:**  
+```{r}
+
+dat <- us_contagious_diseases %>%
+  filter(disease == "Measles", state!= "Alaska", state!= "Hawaii")
+dat$per_100k_ppl_rate <- 10000 * (dat$count/dat$population) * (dat$weeks_reporting/52) 
+
+  
+```
+
+```{}
+You are missing a zero in the numerator... 
+```
+
+2. Plot the Measles disease rates per year for California. Find out when the Measles vaccine was introduced and add a vertical line to the plot to show this year.  
+
+    **Solution:** 
+```{r}
+
+cal <- select(filter(dat, state %in% c("California")), year, per_100k_ppl_rate)
+
+plot(cal, type='l', main="distribution of measles in california", ylab = "disease rate per 100k")
+abline(v=1963,col='red')
+
+
+```
+
+
+3. Does the pattern hold for other states? Use boxplots to get an idea of the distribution of rates for each year, and see if the pattern holds across states.  
+a. Generate the plot with scale_y_continuous
+b. Generate the same plot but now with scale_y_sqrt (breaks = seq(0, 100, 4)^2))  
+Which one is better and why?
+
+    **Solution:**   
+    
+```{r}
+
+#a
+
+dat %>% 
+  ggplot(aes(year, per_100k_ppl_rate, group = year)) +
+  geom_boxplot() +
+  scale_y_continuous(limits = c(0,260)) +
+  ylab("disease rate per 100k") +
+  ggtitle("(a) distribution of measels across states")
+
+
+#b
+
+dat %>%
+  ggplot(aes(year, per_100k_ppl_rate, group = year)) +
+  geom_boxplot() +
+  scale_y_sqrt(breaks = seq(0, 100, 4)^2) +
+  ylab("disease rate per 100k") +
+  ggtitle("(b) distribution of measels across states")
+
+
+
+# the second plot is better, because we can see better the distribution in the years where the rate is smaller. as we see, the pattern is similar to the pattern of california.
+
+```
+
+
+4. One problem with the boxplot is that it does not let us see state-specific trends.  Plot the Measles disease rates per year for all states. Find out when the Measles vaccine was introduced and add a vertical line to the plot to show this year. Add the US average to the plot. Hint: Note there are missing values in the data.  
+
+    **Solution:**  
+   
+```{r}
+
+dat <- dat[complete.cases(dat),]
+
+dat %>% 
+ggplot(aes(year, per_100k_ppl_rate)) +
+       geom_point() +
+        scale_y_sqrt (breaks = seq(0, 100, 4)^2)  +
+        geom_vline(xintercept =1963, col='red')  +
+        stat_summary(fun.y = mean, color = "green", geom = "point", aes(group = 1), size = 3, show.legend = FALSE) +
+  ylab("disease rate per 100k") +
+  ggtitle("distribution of measels for all states")
+
+
+
+
+
+
+```
+
+## Part 2
+
+Here we'll start analyzing the results we collected in class regarding the display of visual information. 
+
+5. Download and import the "Cleveland Experiment.csv" and "correct.Rdata" files from moodle. 
+
+```{}
+Cleveland_Experiment <- read.csv("C:/Users/Tal/Desktop/R/lab2/Cleveland_Experiment.csv")
+load("C:/Users/Tal/Desktop/R/lab2/correct.rdata")
+```
+```{r}
+admin <- "Lee" #  "Lee" # or 
+if (admin=="Yuval") {
+  experiment <- "/Users/yuvalb/Dropbox/52414/Lectures_2018/labs/lab_2/Cleveland_Experiment.csv"
+  correct <- "/Users/yuvalb/Dropbox/52414/Lectures_2018/course_data/labs/lab_2/correct.rdata"
+} else if (admin == "Lee"){
+  experiment <- "~/Dropbox (Personal)/School/52414/Lectures_2018/labs/lab_2/Cleveland_Experiment.csv"
+  correct <- "~/Dropbox (Personal)/School/52414/Lectures_2018/labs/lab_2/correct.rdata"
+} else {
+  print("Admin name not specified correctly")
+}
+
+Cleveland_Experiment <- read.csv(file = experiment, stringsAsFactors = FALSE)
+load(correct)
+```
+
+6. Look at the distribution of guesses of Question 2 of the experiment.  
+a. Compare the correct difference vs the reported (experiment data)
+b. Compare it to a normal distribution with a histogram and with the qq-plot.  
+c. Compare to the normal distribution using a density plot. 
+d. Would you approximate this distribution using the normal? 
+
+    Solution:
+
+```{r}
+Cleveland_Experiment <- Cleveland_Experiment[complete.cases(Cleveland_Experiment$Question.2),]
+q2<- Cleveland_Experiment$Question.2
+
+hist(x = q2 , breaks = length(q2), main = "(a) distribution of question 2 and the correct answer", xlab = "question 2")
+abline(v = correct[2] , col = "red")
+
+
+```
+
+```{r}
+hist(q2, xlim=c(0,0.2), ylim = c(0,8), breaks = seq(min(q2),max(q2), length = 24), main = "(b1) histogram of question 2", xlab = "question 2")
+points(seq(0, 0.2, length.out = 500), dnorm(seq(0,0.2, length.out = 500), mean(q2), sd(q2)), type = "l", col="red")
+
+```
+
+```{r}
+qqnorm(q2, main = "(b2) normal Q-Q plot of question 2")
+qqline(q2, col = "red")
+
+
+```
+
+```{r}
+ggplot(Cleveland_Experiment, aes(Question.2)) + 
+  geom_density() + 
+  stat_function(fun = dnorm, n = 101, args = list(mean = mean(q2), sd = sd(q2)), col = "red") +
+  ggtitle("(c) density of question 2")
+
+```
+
+```{r}
+#(d) we can see that with the qqplot the distribution is a liitle far from the normal, but it has a close shape with the destiny and the histogram functions, so we can approximate this distribution using the normal.  
+```
+
+7. Perform the same analysis (all the above) for question 5 of the experiment.  
+How are the two compare?  
+
+    Solution:
+
+```{r}
+Cleveland_Experiment <- Cleveland_Experiment[complete.cases(Cleveland_Experiment$Question.5),]
+q5 <- Cleveland_Experiment$Question.5
+
+#a
+hist(x = q2 , breaks = length(q2), main = "(a) distribution of question 5 and the correct answer", xlab = "question 5")
+abline(v = correct[2] , col = "red")
+
+#b
+#histegram
+
+hist(q5, xlim=c(0,1), ylim = c(0,10), breaks = seq(min(q5),max(q5), length = 24), main = "histogram of question 5", xlab = "question 5")
+points(seq(0, 1, length.out = 500), dnorm(seq(0,1, length.out = 500), mean(q5), sd(q5)), type = "l", col="red")
+
+#qqplot
+
+qqnorm(q5, main = "(b2) normal Q-Q plot of question 5")
+qqline(q5, col = "red")
+
+#c
+ggplot(Cleveland_Experiment, aes(Question.5)) + 
+  geom_density() + 
+  stat_function(fun = dnorm, n = 101, args = list(mean = mean(q5), sd = sd(q5)), col = "red") +
+  ggtitle("(c) density of question 2")
+
+# (d) we can see that the distribution is very close to the normal line by using qqplot, but it is very far and have different shape from the normal in the other plots, so we canot approximate it by the normal
+
+
+```
+```{, Lee's comments}
+Your 45 degree line in your qq plot is wrong - see solutions. 
+```
+
+
+8. In one figure graph the boxplots for each experiment question. Hint - use the base R function `stack`. 
+a. Do you think the output figure is satisfying in terms of explaining the data? 
+b. Use scale_y_continuous to trim some of the outliers to make the figure more readable. In addition, add a line to each boxplot to symbolize the `true` mean.  Hint - one way of adding the true lines is by adding another set of boxplots with zero variation centered around `correct`.  
+
+    Solutions:
+```{r}
+exp.new <- stack(Cleveland_Experiment)
+exp.new <- exp.new[complete.cases(exp.new),]
+
+ggplot(exp.new, aes(x=ind, y=values)) +
+  geom_boxplot() +
+  theme(text = element_text(size=8), axis.text.x = element_text(angle=90)) +
+  xlab("questions") +
+  ggtitle("boxplots for each experiment question")
+
+#this output doesnt explain the date in a good way. because there is a few points of higher values, we are not able to see clearly the main data.  
+
+```
+
+```{}
+We've asked for a boxplot  - see solution . ALso, the code below does not run. 
+```
+
+
+```{r}
+
+new.correct <- data.frame(ind = unique(stack(Cleveland_Experiment)$ind), correct)
+all.ex <- merge(exp.new, new.correct ,by ="ind"  )
+
+ggplot(all.ex, aes(x=ind, y=values)) +
+  geom_boxplot() +
+  scale_y_continuous(limits = c(0,1)) +
+  theme(legend.position = "none", text = element_text(size=8), axis.text.x = element_text(angle=90))+
+  geom_boxplot(aes(x = ind ,y = correct ,group=ind, color = ind)) +
+  xlab("questions") +
+  ggtitle("boxplots for each experiment question with correct answer in color line")
+
+```
+
+
+
