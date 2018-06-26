@@ -1,0 +1,78 @@
+---
+title: "Lab 3"
+date: "Due 27/6/2018"
+output: html_document
+editor_options: 
+chunk_output_type: inline
+---
+
+GROUP Number: ____fill-in____  
+Name of 1st group member: ____fill-in____  
+Email of 1st group member: ____fill-in____  
+Name of 2st group member: ____fill-in___ 
+Email of 2st group member: ____fill-in____
+
+**Instructions:**   
+1. Please rename your group lab_3 rmd file as - `Lab3_group#.rmd`.   
+** The # should be replaced by your group number.  
+2. Fill in your code in the relevant code execution boxes.  
+3. Please avoid plagiarism - do not share your answers with other groups.  
+4. Use the encryption guide (see moodle) to encrypt your final rmd file and name it `Lab3_group#_crypt`   
+5. Upload the encrypted file to the following link:  
+** `https://github.com/DataScienceHU/DataAnalysisR/tree/master/Lab3/Lab3_submission/`
+
+# Lab 3
+
+```{r, required libraries, include=FALSE}
+library(ggplot2)
+library(stringr)
+library(tidyr)
+library(quantmod)
+set.seed(403)
+```
+
+**Monte Carlo method is a useful tool for transforming problems of probabilistic nature into deterministic computations using the law of large numbers.**
+
+1. Itegration:  
+a. What is the functional of `x` in the function below? (i.e., how is `g(x)` distributed?)
+\[\int_{-2}^{12}\frac{1}{10\sqrt{2\pi}}e^{-\frac{(x-1)^2)}{2\times10^2}}dx\]
+b. Calculate the integral above using Monte Carlo simulation. Monte Carlo simulations are done by generating samples of $g(x)$ and then estimating  $E[g(x)]$ from our simulations output. Use 100,000 simulations to estimate the integral.  
+c. Find out the true integral value.
+d. Create a plot that demonstrates the Law of Large Numbers using the itegration simulation and the true integral value.  
+
+
+  
+2. The area of the circle is $A_{circle} = \pi r^2$. The area of a square containing this circle is $A_{square} = 4r^2$. We can use this information to estimate $\pi$ , the ratio of a circle's circumference to its diameter.  
+a. What is the ratio of the area of the circle to the area of the square?  
+b. How can we use this information to estimate $\pi$?
+c. Write a Monte Carlo simulation that achieves exactly that.  
+d. Plot the points that fall inside the circle in one color and outside in another,  showing Monte Carlo simulation on the circle and square.  
+  
+  
+  
+3. [Value at risk or ](https://en.wikipedia.org/wiki/Value_at_risk) is a measure of the risk of loss for investments and is widely used by financial institutions. Value at Risk estimates how much of a stock/portfolio/investment might lose or gain (with a given probability), given normal/abnormal market conditions and assumptions, during a fixed time.  
+For this example our stockastic process of choice is the popular [Geometric Brownian motion](https://en.wikipedia.org/wiki/Geometric_Brownian_motion): \[S_{t+1} = S_t \times(1 +\mu \Delta_t + \sigma\epsilon \sqrt(\Delta_t)) \] where $S_t$ is price in time $t$, $\mu$ is our drift, $\Delta_t$ means one period, $\sigma$ is our volatility and $\epsilon$ is a random uniform number between 0 and 1. 
+a. Using the package `quantmod::getSymbols`, load daily data of the NASDAQ (date & adjusted price) starting from  `2010-01-01`.  
+b. Write a function `f.stock.return` that accepts `stock_price`,`n_periods`, `stock_mu`,`stock_sigma` and outputs the Brownian Motion prices vector (including the initial starting price) along the periods. Use the following:
+\[(1 +\mu \Delta_t + \sigma\epsilon \sqrt(\Delta_t)) = (1 + qnorm(epsilon, stock\_mu \times delta\_t, stock\_sigma \times  sqrt(delta\_t))) \] Define delta_t as $1/n$. Once done, test your function using `f.stock.return(7000,20,0.05,0.2)`. 
+
+c. Plot the prices along their respective dates (from beginning of `2015-01-01`). Seperately, calculate the mean and standard deviation of the nasdaq prices from `2016-02-01` and forward - you will use this information as the model parameters.
+d. Using your function and the mean and sd you calculated in (c), simulate 10 different scenarios starting at the beginning of May 2018, going 21 days into May. Plot these simulated data together with the real prices. 
+e. Using Monte Carlo and the function you created, simulate 10000 different stock runs (keeping only the last price in each run - should be index 22), and use `quantile()` to explain the Value at Risk of our model. 
+f. What are the odds that the NASDAQ price will drop below $5000?   
+  
+  
+  
+4. [Assessment 5 Revisit](https://moodle2.cs.huji.ac.il/nu17/mod/resource/view.php?id=246918):  
+First, read the parsing_gap_minder_messy.txt file into r using `readLines` and print a few rows.
+```{r, loading data}
+#data <- readLines(".../parsing_gap_minder_messy.txt" )
+#head(data)
+```
+
+a. We want to make sure that every line starts with a country name.  
+Use `str_detect` with the appropriate regex to test that every line of the data starts with a capital letter exactly once (no other capital letters follow it).
+b. Now let's match against the continent. Here are the possible continents: `Africa,Eruope,Americas,Asia,Oceania`. Use `str_detect` with the appropriate regex to test that every line has at least one of these continents. 
+c. Create a regex that matches complety to our data. Hint: the life expectancy and gdp can be whole numbers (instead of fractions). In addition, consider some odd character in the country name. The `*` regex character is useful for that...
+
+
