@@ -1,0 +1,99 @@
+---
+title: "Final Assignment"
+date: "Due 1/8/2018"
+output: html_document
+editor_options: 
+chunk_output_type: inline
+---
+
+**Instructions:**   
+1. Please rename your final assignment rmd file as - `finalAssign_name.rmd`.   
+2. Fill in your code in the relevant code execution boxes.  
+3. Please avoid plagiarism - do not share your answers with other students!  
+4. Use the encryption guide (see moodle) to encrypt your final rmd file and name it `finalAssign_name_rmd_crypt`  
+5. Use the encryption guide to encrypt also your HTML file and name it `finalAssign_name_html_crypt`  
+6. Upload the encrypted files to the following link:   
+`https://github.com/DataScienceHU/DataAnalysisR/tree/master/finalAssignment/finalAssignment_submission/`
+
+```{r, required libraries, include=FALSE}
+library(ggplot2)
+library(stringr)
+library(tidyr)
+library(tidyverse)
+library(knitr)
+library(plotly)
+set.seed(403)
+```
+
+# 52414 Final Assignment
+![](http://community.globaleditorsnetwork.org/sites/default/files/styles/project_presentation/public/680x2602x.jpg?itok=mUi201So)  
+
+**The final assignment is based on an article published by 
+[*FiveThirtyEight*](http://fivethirtyeight.com/). In the article, the author investigated differences between male and female superheroes in comic books: [*Comic Books Are Still Made By Men, For Men And About Men*](https://fivethirtyeight.com/features/women-in-comic-books/). In this assignment, you will not only try to reproduce some of the findings with a more up-do-date data, but will also dive deeper into the data to provide meaningful insights backed by statistical analysis.**  
+
+a. Do not use libraries outside of the required libraries.  
+b. It is recommended to read the 538 article.  
+
+### 1) Data Loading and Cleaning  
+
+*Load the `heroes`,`powers`, and the `details` datasets.*  
+```{r Loading Data}
+df_heroes <- read.csv("", stringsAsFactors=FALSE)
+df_powers <- read.csv("", stringsAsFactors=FALSE)
+df_details <- readLines("")
+```
+
+  
+a. Using kable, show the first 10 rows of the `heroes` dataframe.  
+
+b. Note that there are two types of NA's in the dataset: `-` and `-99`. Write a script that goes over each column of the dataframe and counts how many `-` and how many `-99` appears in each column.  
+
+c. We would like to replace all of the above instances. Write another script that goes over the columns and replaces all the `-` to `otherNA` and `-99` to `NA`. Using kable, show the first 10 rows of the resulting dataframe.  
+
+*Next we will parse and clean the `details` dataset:*  
+
+d. Currently, the `details` data is loaded as a character vector. Parse the vector and transalte it into a dataframe containing two columns: power_name(chr) and power_score(double).  
+
+### 2) Exploratory Data Analysis
+
+**We are going to concetrate our analysis on the gender disparity and representation of Comics superheroes.**   
+  
+a. Make a plot of the gender distribution (total, not intersected with any other variable). 
+  
+*Run the script in the box below. We can see that 'DC Comics' & 'Marvel Comics' are the two major players in the comics industry. Let's focus our analysis on these two companies.* 
+  
+**For the rest of the analysis, we will concetrate only on comics by `DC Comics` and `Marvel Comics`. **  
+  
+b. Make a plot comparing the gender distribution of superheroes in DC Comics vs Marvel
+
+c. Make the same plot as above, but this time take `Alignment` into consideration as well.  
+  
+d. Are the gender differences between the two publishers statistically significant? Use a parametric test for that. 
+
+### 3) Diving Deeper
+
+*Beside the gender ratio of superheroes and their alignment, we can also investigate their character representation.*  
+
+a. Count the number of powers for each superhero using the 'powers' dataset and add this count as a column `pwrs_cnt` to the `powers` dataframe. Join the `pwrs_cnt` column to the `heroes` dataframe.    
+
+b. Make a plot showing the distribution of `pwrs_cnt` for each of the genders. 
+
+c. Check if the distribution of `pwrs_cnt` by gender follows the normal distribution.  
+
+d. Use a location test to test if there is a difference between the gender power counts.  
+
+
+### 4) The Stochastic Universe  
+
+a. Use Montecarlo methods to calculate the probability that a random team of 4 female superheros will overcome (total powers will be greater) a random team of 4 male superheros.
+
+b. Suppose DC Comics selects randomly and independently whether to choose a male or a female superhero:
+	Write a Montecarlo simulation to test the hypothesis that the probability for choosing a female hero is 0.5. Use the observed number of heros.  
+
+	  
+### 5) Your Own Take  
+
+Show graphically one interesting insight you have found in the provided datasets - this can be unrelated to the gender analysis we have carried. 
+
+
+
