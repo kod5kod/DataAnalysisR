@@ -1,0 +1,322 @@
+---
+title: "Final Assignment"
+date: "Due 1/8/2018"
+output: html_document
+editor_options: 
+chunk_output_type: inline
+---
+
+**Instructions:**   
+1. Please rename your final assignment rmd file as - `finalAssign_name.rmd`.   
+2. Fill in your code in the relevant code execution boxes.  
+3. Please avoid plagiarism - do not share your answers with other students!  
+4. Use the encryption guide (see moodle) to encrypt your final rmd file and name it `finalAssign_name_rmd_crypt`  
+5. Use the encryption guide to encrypt also your HTML file and name it `finalAssign_name_html_crypt`  
+6. Upload the encrypted files to the following link:   
+`https://github.com/DataScienceHU/DataAnalysisR/tree/master/finalAssignment/finalAssignment_submission/`
+
+```{r, required libraries, include=FALSE}
+library(ggplot2)
+library(stringr)
+library(tidyr)
+library(tidyverse)
+library(knitr)
+library(plotly)
+set.seed(403)
+```
+
+# 52414 Final Assignment
+![](http://community.globaleditorsnetwork.org/sites/default/files/styles/project_presentation/public/680x2602x.jpg?itok=mUi201So)  
+
+**The final assignment is based on an article published by 
+[*FiveThirtyEight*](http://fivethirtyeight.com/). In the article, the author investigated differences between male and female superheroes in comic books: [*Comic Books Are Still Made By Men, For Men And About Men*](https://fivethirtyeight.com/features/women-in-comic-books/). In this assignment, you will not only try to reproduce some of the findings with a more up-do-date data, but will also dive deeper into the data to provide meaningful insights backed by statistical analysis.**  
+
+a. Do not use libraries outside of the required libraries.  
+b. It is recommended to read the 538 article.  
+
+### 1) Data Loading and Cleaning 
+###Loading data
+```{r}
+heroes <- read.csv("C:/Ran/R/Advance Course/FINAL/heroes.csv", stringsAsFactors=FALSE)
+powers <- read.csv("C:/Ran/R/Advance Course/FINAL/powers.csv", stringsAsFactors=FALSE)
+
+```
+
+*Load the `heroes`,`powers`, and the `details` datasets.*     
+  
+a. Using kable, show the first 10 rows of the `heroes` dataframe.  
+
+```{r head_heroes_tidy}
+heroes <- heroes[,-1]
+knitr::kable(head(heroes,10),caption="Heroes List (first 10 rows)")
+```
+b. Note that there are two types of NA's in the dataset: `-` and `-99`. Write a script that goes over each column of the dataframe and counts how many `-` and how many `-99` appears in each column.  
+```{r}
+type_99 = vector()
+type_hyphen = vector()
+for(i in 1:ncol(heroes)){
+  type_99[i] = sum(str_count(heroes[,i], "-99"),na.rm = T)
+  type_hyphen[i] = sum(str_count(heroes[,i], "-"),na.rm = T)
+}
+count = cbind(type_99,type_hyphen)
+colnames(count) = c("-99 count", " - count")
+rownames(count) = c("column 1", "column 2","column 3","column 4","column 5","column 6", "column 7","column 8","column 9","column 10")
+kable(count)
+```
+
+
+c. We would like to replace all of the above instances. Write another script that goes over the columns and replaces all the `-` to `otherNA` and `-99` to `NA`. Using kable, show the first 10 rows of the resulting dataframe.  
+```{r}
+###Data Perparation
+for(i in 1:ncol(heroes)){
+  heroes[,i][str_count(heroes[,i], "-99") == 1] = "NA"
+  heroes[,i][str_count(heroes[,i], "-") == 1] = "otherNA"
+}
+```
+
+```{r}
+knitr::kable(head(heroes,10),caption="Heroes List (first 10 rows)")
+```
+*Next we will parse and clean the `details` dataset:*  
+
+d. Currently, the `details` data is loaded as a character vector. Parse the vector and transalte it into a dataframe containing two columns: power_name(chr) and power_score(double).  
+```{r}
+details <- read_delim("details.txt", "+", 
+     escape_double = FALSE, col_names = c("power_name" ,"power_score"),
+     trim_ws = TRUE)
+colnames(details) = c("Power name", "Power score")
+head(details)
+```
+
+### 2) Exploratory Data Analysis
+
+**We are going to concetrate our analysis on the gender disparity and representation of Comics superheroes.**   
+  
+a. Make a plot of the gender distribution (total, not intersected with any other variable). 
+```{r}
+my_dat <- heroes %>%
+  group_by(heroes$Gender) %>%
+  summarise(counts = n())
+
+bp<- ggplot(my_dat, aes(x=`heroes$Gender`, y=counts, fill=`heroes$Gender`))+
+geom_bar(width = 0.5, stat = "identity")+
+geom_text(aes(label=counts), size = 5)+
+theme(axis.text.x = element_text(angle = 80, hjust = 0.5))+
+geom_area(position = 'stack')
+bp
+
+pie <- ggplot(heroes, aes(x = "", fill = factor(heroes$Gender))) + 
+  geom_bar(width = 1) +
+  theme(axis.line = element_blank(), 
+  plot.title = element_text(hjust=0.5)) + 
+  labs(fill="class", 
+  title="Pie Chart of Gender", x=NULL,y = NULL)
+  
+  
+pie + coord_polar(theta = "y",start = 0, direction = 1)
+```
+
+  
+*Run the script in the box below. We can see that 'DC Comics' & 'Marvel Comics' are the two major players in the comics industry. Let's focus our analysis on these two companies.* 
+  
+**For the rest of the analysis, we will concetrate only on comics by `DC Comics` and `Marvel Comics`. **  
+```{r} 
+Publishers <- c("Marvel Comics","DC Comics")
+heroes_filter = filter(heroes, Publisher == c("DC Comics", "Marvel Comics"))
+```
+b. Make a plot comparing the gender distribution of superheroes in DC Comics vs Marvel
+```{r}
+##We can see that most of heroes come from Marvel instead of DC.
+
+dat1<-heroes_filter %>% group_by(Gender,Publisher) %>% summarise(number = n()) %>% arrange(-number)
+tab1<-dat1 %>% group_by(Publisher) %>% mutate(countT= sum(number)) %>% group_by(Gender) %>% mutate(percentage=100*number/countT)
+tab1$LABEL <-paste0(round(tab1$percentage,2))
+pieC<-as.data.frame(dat1 %>% group_by(Publisher) %>% select(number) %>% summarise(sum=sum(number)))
+
+plot1<-ggplot(tab1,aes(x=Gender,y=percentage,fill=Publisher)) + geom_bar(width = 0.9, stat="identity",position='dodge') + 
+  theme(axis.text.x = element_text(angle=80, hjust=1),legend.position='bottom') + 
+  geom_text(aes(label=LABEL), position=position_dodge(width=0.9), vjust=-0.25,size=2.5) + 
+  scale_fill_manual(values = c("deepskyblue","darkorange")) + 
+  xlab('gender distribution of superheroes') + ylab('percentage - %')
+plot1
+
+plot2<-ggplot(pieC,aes(x="",y=sum,fill=Publisher,Gender)) + geom_bar(stat='identity',width = 5) + 
+  coord_polar(theta="y") + theme_void() + theme(axis.text.x=element_blank(),legend.position='bottom') + 
+  scale_fill_manual(values = c("deepskyblue","darkorange")) + 
+  geom_text(aes(y =c(220,70), label = paste(pieC$Publisher,pieC$sum)))
+plot2
+```
+c. Make the same plot as above, but this time take `Alignment` into consideration as well.  
+```{r}
+dat2<-heroes_filter %>% group_by(Gender,Publisher,Alignment) %>% summarise(number = n()) %>% arrange(-number)
+
+plot3<-ggplot(dat2) +
+  geom_col(aes(Gender, number, fill = Alignment)) +
+  theme(text = element_text(size=16)) +
+  scale_fill_brewer(palette="Dark2") +
+  facet_wrap(~Publisher)
+plot3
+```
+  
+d. Are the gender differences between the two publishers statistically significant? Use a parametric test for that. 
+```{r}
+n = length(heroes_filter$Gender)
+x = c(sum(heroes_filter$Gender[heroes_filter$Publisher == Publishers[2]] == "Male"),sum(heroes_filter$Gender[heroes_filter$Publisher == Publishers[2]] == "Female"),sum(heroes_filter$Gender[heroes_filter$Publisher == Publishers[2]] == "-"),sum(heroes_filter$Gender[heroes_filter$Publisher == Publishers[1]] == "Male"),sum(heroes_filter$Gender[heroes_filter$Publisher == Publishers[1]] == "Female"),sum(heroes_filter$Gender[heroes_filter$Publisher == Publishers[1]] == "-"))
+
+freqs = c(sum(heroes_filter$Gender == "Male"),sum(heroes_filter$Gender == "Female"),sum(heroes_filter$Gender == "-"))/n
+
+m = rep(freqs,2)*c(rep(sum(heroes_filter$Publisher == "DC Comics"),3), rep(sum(heroes_filter$Publisher == "Marvel Comics"),3))
+
+X_sq = sum((x-m)^2/m)
+
+pchisq(X_sq,2,lower.tail = FALSE,log.p = FALSE)
+## Of course that gender differences between the two publishers is statistically significant 95% at degree-of-freedom=2
+```
+### 3) Diving Deeper
+
+*Beside the gender ratio of superheroes and their alignment, we can also investigate their character representation.*  
+
+a. Count the number of powers for each superhero using the 'powers' dataset and add this count as a column `pwrs_cnt` to the `powers` dataframe. Join the `pwrs_cnt` column to the `heroes` dataframe.    
+```{r}
+names(powers)[1] <- "name"
+powers[,-1] <- lapply(powers[,-1], as.logical)
+powers <- powers %>%
+    mutate(pwrs_cnt = rowSums(.[2:ncol(powers)]))
+index <- match(heroes_filter$name,powers$name)
+powers_filter <- (powers[index,])
+heroes_filter$pwrs_cnt <- powers_filter$pwrs_cnt
+```
+b. Make a plot showing the distribution of `pwrs_cnt` for each of the genders. 
+```{r}
+plot4 <- ggplot(data = heroes_filter, aes(x=Gender, y=pwrs_cnt, fill=Gender)) +
+    geom_bar(stat = "identity") + 
+    labs(title = "Powers By Gender", x='Gender',y='Sum of Powers') +
+    theme_bw() +
+    theme(plot.title = element_text(size=17, hjust = 0.5, face = "bold"), legend.position = "bottom", legend.title=element_blank()) +
+    scale_fill_manual(values = c("#A52A2A", "#E41A1C","#EFF62E")) 
+
+plot4
+```
+
+c. Check if the distribution of `pwrs_cnt` by gender follows the normal distribution.  
+```{r}
+dat3<-heroes_filter %>% group_by(name,Gender,pwrs_cnt) %>% summarise(number = n()) %>% arrange(-number)
+
+pwrs_cnt_male <- dat3$pwrs_cnt[dat3$Gender=="Male"]
+pwrs_cnt_male <- pwrs_cnt_male[!is.na(pwrs_cnt_male)]
+pwrs_cnt_female <- dat3$pwrs_cnt[dat3$Gender=="Female"]
+pwrs_cnt_female <- pwrs_cnt_female[!is.na(pwrs_cnt_female)]
+
+qqnorm(heroes_filter$pwrs_cnt, main = "Total Powers Distribution (Both Males&Females)",xlab = "Theoretical Quantiles");qqline(pwrs_cnt_male, col = 3)
+qqnorm(pwrs_cnt_male, main = "Male Powers Distribution",xlab = "Theoretical Quantiles");qqline(pwrs_cnt_male, col = 3)
+qqnorm(pwrs_cnt_female,main = "Female Powers Distribution");qqline(pwrs_cnt_female, col = 3)
+##  We can see the data is quit skewed with long right tail
+```
+d. Use a location test to test if there is a difference between the gender power counts.  
+```{r}
+mean_male = pwrs_cnt_male - mean(pwrs_cnt_male)
+mean_female = pwrs_cnt_female - mean(pwrs_cnt_female)
+
+num <- 10^5
+mean_samp = vector()
+for(i in 1:num){
+  x_samp = sample(mean_male,replace = TRUE)
+  y_samp = sample(mean_female, replace = TRUE)
+  mean_samp[i] = diff(c(mean(x_samp) , mean(y_samp)))
+}
+sum(mean_samp >= 0)/length(mean_samp)
+
+## we get approximately 0.5 so we do not reject the null hypothesis
+```
+
+### 4) The Stochastic Universe  
+
+a. Use Montecarlo methods to calculate the probability that a random team of 4 female superheros will overcome (total powers will be greater) a random team of 4 male superheros.
+```{r}
+samp_function <- function(perimeter=1){
+  x <- sum(sample(pwrs_cnt_male,4))
+  y <- sum(sample(pwrs_cnt_female,4))
+  return(list(x=x, 
+              y=y,
+              in_func1= x < y))
+}
+# Monte Carlo simulations
+N <- 10^4
+my_df <- data.frame(x=rep(NA, N),
+                    y=rep(NA, N),
+                    in_func1=rep(NA, N))
+for (i in seq(N)){
+  my_simulation <- samp_function()
+  my_df$in_func1[i] <- my_simulation$in_func1
+  my_df$x[i] <- my_simulation$x
+  my_df$y[i] <- my_simulation$y
+}
+ 
+My_prob1 <- sum(my_df$in_func1/N)
+My_prob1
+##We can see that approximately 31% probability for 4 females stronger from 4 males using the Montecarlo method.
+```
+b. Suppose DC Comics selects randomly and independently whether to choose a male or a female superhero:
+	Write a Montecarlo simulation to test the hypothesis that the probability for choosing a female hero is 0.5. Use the observed number of heros.  
+```{r}
+dat4 <- heroes_filter[heroes_filter$Publisher == "DC Comics",]
+DC_Gender <- dat4$Gender
+gender_vec = vector()
+prob_vec = vector()
+for(i in 1:10000){
+  gender_vec = sample(DC_Gender,replace = TRUE)
+  prob_vec[i] = mean(gender_vec == "Female")
+}
+mean(prob_vec)
+## Very low under 0.5 so we reject the null hypotesis that Females are 0.5 of the population of DC comics. we can see it very clearly:
+
+## CI is approximately [0.41, 0.59]
+mean(prob_vec >= 0.41 & prob_vec<= 0.59)
+# So we Reject the NULL hypotesis
+```
+	  
+### 5) Your Own Take  
+
+Show graphically one interesting insight you have found in the provided datasets - this can be unrelated to the gender analysis we have carried. 
+
+```{r}
+###I want to represent 2 intersting things:
+# a) The most 10 powerful heroes by 2 most famous Publishers &
+# b) Distribution of heroes by their Alignment.
+powers <- powers %>%
+    mutate(total_powers = rowSums(.[2:ncol(powers)]))
+    
+top10_heroes <- heroes_filter %>%
+    inner_join(powers, by = c('name')) %>%
+    select(name, total_powers, Publisher) %>%
+    arrange(desc(total_powers)) %>%
+    head(10)
+
+top10_heroes %>%
+    ggplot(aes(x=reorder(name,total_powers), y=total_powers, fill=Publisher)) +
+    geom_bar(stat = "identity") + 
+    geom_text(aes(label = total_powers), hjust = -0.4, size = 3, color = "black") +
+    labs(title = "Top 10 Superheroes powerful", x='Name',y='Number of Powers') +
+    theme_bw() +
+    theme(plot.title = element_text(size=17,hjust = -0.4, face = "bold"), legend.position = "bottom", legend.title=element_blank()) +
+    scale_fill_manual(values = c("#505B87", "#17B63C")) +
+    coord_flip()
+
+##a)Captain Marvel is belonging to both publishers.
+
+
+##Alignment Distribution
+heroes$Alignment <- factor(heroes$Alignment, levels = c('bad','neutral','good'))
+
+ggplot(data=subset(heroes_filter, !is.na(Alignment)), aes(x = Publisher, fill = Alignment)) +
+    geom_bar(position = "fill") +
+    scale_fill_brewer(palette = "Set1") +
+    labs(x = "", y = "") +
+    theme_bw()
+##b)We can see that most of heroes are good for both publishers and bad-heroes is approxmately 1/2
+##of good-heroes.
+
+##End of Course -> I want to thank you about this informative & challenging Course   :-)
+
+```
+#Ran Stern, 308100379
